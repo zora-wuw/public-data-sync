@@ -20,7 +20,7 @@ def integer_param_validator(value):
 	if int(value) <= 0:
 		raise argparse.ArgumentTypeError("%s is an invalid, please specify a positive value greater than 0" % value)
 	return int(value)
-	
+
 parser = argparse.ArgumentParser()
 parser.add_argument('-p', '--path', help='Path to place the public data files', default='./')
 parser.add_argument('-s', '--summaries', help='Download summaries', action='store_true')
@@ -28,7 +28,7 @@ parser.add_argument('-a', '--activities', help='Download activities', action='st
 parser.add_argument('-t', '--tar', help='Compress the dump', action='store_true')
 parser.add_argument('-max', '--max_cpus', default=30)
 parser.add_argument('-d', '--days', help='Days to sync', type=integer_param_validator)
-parser.add_argument('-h', '--host', help='MongoDB host', default='localhost')
+parser.add_argument('-host', '--host', help='MongoDB host', default='localhost')
 parser.add_argument('-p', '--port', help='MongoDB port', default=27017)
 parser.add_argument('-u', '--username', help='MongoDB username', default='')
 parser.add_argument('-psword', '--password', help='MongoDB password', default='')
