@@ -73,7 +73,7 @@ def integer_param_validator(value):
 def download_summaries_file(orcid_to_sync):
 	# create mongodb instance for each process
 	client = MongoClient(ip, int(port), username=user_name, password=psword, maxPoolSize=10000)
-    db = client[db_name]
+	db = client[db_name]
 
 	suffix = orcid_to_sync[-3:]
 	prefix = suffix + '/' + orcid_to_sync + '.xml'
@@ -101,7 +101,7 @@ def download_summaries_file(orcid_to_sync):
 #---------------------------------------------------------
 def download_activities_file(orcid_to_sync):
 	client = MongoClient(ip, int(port), username=user_name, password=psword, maxPoolSize=10000)
-    db = client[db_name]
+	db = client[db_name]
 
 	suffix = orcid_to_sync[-3:]
 	prefix = suffix + '/' + orcid_to_sync + '/'
