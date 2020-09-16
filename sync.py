@@ -13,6 +13,14 @@ from multiprocessing import Pool
 from pymongo import MongoClient
 import pymongo
 
+#---------------------------------------------------------
+# Validates an integer is positive
+#---------------------------------------------------------
+def integer_param_validator(value):
+	if int(value) <= 0:
+		raise argparse.ArgumentTypeError("%s is an invalid, please specify a positive value greater than 0" % value)
+	return int(value)
+	
 parser = argparse.ArgumentParser()
 parser.add_argument('-p', '--path', help='Path to place the public data files', default='./')
 parser.add_argument('-s', '--summaries', help='Download summaries', action='store_true')
@@ -58,14 +66,6 @@ date_format_no_millis = '%Y-%m-%d %H:%M:%S'
 now = datetime.now()
 month = str(now.month)
 year = str(now.year)
-
-#---------------------------------------------------------
-# Validates an integer is positive
-#---------------------------------------------------------
-def integer_param_validator(value):
-	if int(value) <= 0:
-		raise argparse.ArgumentTypeError("%s is an invalid, please specify a positive value greater than 0" % value)
-	return int(value)
 
 #---------------------------------------------------------
 # Download modified files in summaries
