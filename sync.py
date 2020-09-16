@@ -10,6 +10,37 @@ import CustomLogHandler
 import shutil
 import shlex
 from multiprocessing import Pool
+from pymongo import MongoClient
+import pymongo
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-p', '--path', help='Path to place the public data files', default='./')
+parser.add_argument('-s', '--summaries', help='Download summaries', action='store_true')
+parser.add_argument('-a', '--activities', help='Download activities', action='store_true')
+parser.add_argument('-t', '--tar', help='Compress the dump', action='store_true')
+parser.add_argument('-max', '--max_cpus', default=30)
+parser.add_argument('-d', '--days', help='Days to sync', type=integer_param_validator)
+parser.add_argument('-h', '--host', help='MongoDB host', default='localhost')
+parser.add_argument('-p', '--port', help='MongoDB port', default=27017)
+parser.add_argument('-u', '--username', help='MongoDB username', default='')
+parser.add_argument('-psword', '--password', help='MongoDB password', default='')
+parser.add_argument('-db', '--database', help='MongoDB database name', default='')
+parser.add_argument('-c', '--collection', help='MongoDB collection name', default='')
+args = parser.parse_args()
+
+path = args.path if args.path.endswith('/') else (args.path + '/')
+path = path + 'ORCID_public_data_files/'
+download_summaries = args.summaries
+download_activities = args.activities
+days_to_sync = args.days
+tar_dump = args.tar
+MAX_CPUS = int(args.max_cpus)
+ip = args.host
+port = int(args.port)
+user_name = args.username
+psword = args.password
+db_name = args.database
+collection_name = args.collection
 
 logger = logging.getLogger('sync')
 formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
@@ -40,15 +71,40 @@ def integer_param_validator(value):
 # Download modified files in summaries
 #---------------------------------------------------------
 def download_summaries_file(orcid_to_sync):
+	# create mongodb instance for each process
+	client = MongoClient(ip, int(port), username=user_name, password=psword, maxPoolSize=10000)
+    db = client[db_name]
+
 	suffix = orcid_to_sync[-3:]
 	prefix = suffix + '/' + orcid_to_sync + '.xml'
 	cmd = 'aws s3 cp ' + summaries_bucket + prefix + ' ' + path + 'summaries/' + prefix + ' --only-show-errors'
 	subprocess.call(shlex.split(cmd), shell=False)
+	record_dict = {}
+	record_dict["_id"] = orcid_to_sync
+	with open(path + 'summaries/' + prefix,"r",encoding="UTF-8") as f:
+		xml_content = f.read()
+		record_dict["xml_content"] = xml_content
+		record_dict["last-updated"] = datetime.now()
+
+		try:
+        	db[collection_name].insert_one(record)
+	    except pymongo.errors.DuplicateKeyError:
+	        db[collection_name].delete_one({"_id":record["_id"]})
+            db[collection_name].insert_one(record)
+	    except Exception as e:
+	        logging.info("------------------------------------")
+	        logging.info(e)
+	        logging.info("Error object id(orcid/file name): {}".format(record["_id"])) 
+
+
 
 #---------------------------------------------------------
 # Download modified files in activities
 #---------------------------------------------------------
 def download_activities_file(orcid_to_sync):
+	client = MongoClient(ip, int(port), username=user_name, password=psword, maxPoolSize=10000)
+    db = client[db_name]
+
 	suffix = orcid_to_sync[-3:]
 	prefix = suffix + '/' + orcid_to_sync + '/'
 	local_directory = path + 'activities/' + prefix
@@ -71,23 +127,6 @@ def download_activities_file(orcid_to_sync):
 		if not os.listdir(path + 'activities/' + suffix):
 			logger.info('Deleting %s because because it is empty', path + 'activities/' + suffix)
 			shutil.rmtree(path + 'activities/' + suffix)
-
-parser = argparse.ArgumentParser()
-parser.add_argument('-p', '--path', help='Path to place the public data files', default='./')
-parser.add_argument('-s', '--summaries', help='Download summaries', action='store_true')
-parser.add_argument('-a', '--activities', help='Download activities', action='store_true')
-parser.add_argument('-t', '--tar', help='Compress the dump', action='store_true')
-parser.add_argument('-max', '--max_cpus', default=30)
-parser.add_argument('-d', '--days', help='Days to sync', type=integer_param_validator)
-args = parser.parse_args()
-
-path = args.path if args.path.endswith('/') else (args.path + '/')
-path = path + 'ORCID_public_data_files/'
-download_summaries = args.summaries
-download_activities = args.activities
-days_to_sync = args.days
-tar_dump = args.tar
-MAX_CPUS = int(args.max_cpus)
 
 #---------------------------------------------------------
 # Main process
