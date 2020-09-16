@@ -87,14 +87,14 @@ def download_summaries_file(orcid_to_sync):
 		record_dict["last-updated"] = datetime.now()
 
 		try:
-        	db[collection_name].insert_one(record)
-	    except pymongo.errors.DuplicateKeyError:
-	        db[collection_name].delete_one({"_id":record["_id"]})
-            db[collection_name].insert_one(record)
-	    except Exception as e:
-	        logging.info("------------------------------------")
-	        logging.info(e)
-	        logging.info("Error object id(orcid/file name): {}".format(record["_id"])) 
+			db[collection_name].insert_one(record)
+		except pymongo.errors.DuplicateKeyError:
+			db[collection_name].delete_one({"_id":record["_id"]})
+			db[collection_name].insert_one(record)
+		except Exception as e:
+			logging.info("------------------------------------")
+			logging.info(e)
+			logging.info("Error object id(orcid/file name): {}".format(record["_id"])) 
 
 #---------------------------------------------------------
 # Download modified files in activities
