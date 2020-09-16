@@ -96,8 +96,6 @@ def download_summaries_file(orcid_to_sync):
 	        logging.info(e)
 	        logging.info("Error object id(orcid/file name): {}".format(record["_id"])) 
 
-
-
 #---------------------------------------------------------
 # Download modified files in activities
 #---------------------------------------------------------
