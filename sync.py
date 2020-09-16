@@ -29,7 +29,7 @@ parser.add_argument('-t', '--tar', help='Compress the dump', action='store_true'
 parser.add_argument('-max', '--max_cpus', default=30)
 parser.add_argument('-d', '--days', help='Days to sync', type=integer_param_validator)
 parser.add_argument('-host', '--host', help='MongoDB host', default='localhost')
-parser.add_argument('-p', '--port', help='MongoDB port', default=27017)
+parser.add_argument('-port', '--port', help='MongoDB port', default=27017)
 parser.add_argument('-u', '--username', help='MongoDB username', default='')
 parser.add_argument('-psword', '--password', help='MongoDB password', default='')
 parser.add_argument('-db', '--database', help='MongoDB database name', default='')
