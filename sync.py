@@ -83,7 +83,7 @@ def download_summaries_file(orcid_to_sync):
 	record_dict["_id"] = orcid_to_sync
 	with open(path + 'summaries/' + prefix,"r",encoding="UTF-8") as f:
 		xml_content = f.read()
-		record_dict["xml_content"] = xml_content
+		record_dict["xml-content"] = xml_content
 		record_dict["last-updated"] = datetime.now()
 
 		try:
