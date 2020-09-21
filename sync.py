@@ -75,26 +75,30 @@ def download_summaries_file(orcid_to_sync):
 	client = MongoClient(ip, int(port), username=user_name, password=psword, maxPoolSize=10000)
 	db = client[db_name]
 
-	suffix = orcid_to_sync[-3:]
-	prefix = suffix + '/' + orcid_to_sync + '.xml'
-	cmd = 'aws s3 cp ' + summaries_bucket + prefix + ' ' + path + 'summaries/' + prefix + ' --only-show-errors'
-	subprocess.call(shlex.split(cmd), shell=False)
-	record_dict = {}
-	record_dict["_id"] = orcid_to_sync
-	with open(path + 'summaries/' + prefix,"r",encoding="UTF-8") as f:
-		xml_content = f.read()
-		record_dict["xml-content"] = xml_content
-		record_dict["last-updated"] = datetime.now()
+	try:
+		suffix = orcid_to_sync[-3:]
+		prefix = suffix + '/' + orcid_to_sync + '.xml'
+		cmd = 'aws s3 cp ' + summaries_bucket + prefix + ' ' + path + 'summaries/' + prefix + ' --only-show-errors'
+		subprocess.call(shlex.split(cmd), shell=False)
+		record_dict = {}
+		record_dict["_id"] = orcid_to_sync
+		with open(path + 'summaries/' + prefix,"r",encoding="UTF-8") as f:
+			xml_content = f.read()
+			record_dict["xml-content"] = xml_content
+			record_dict["last-updated"] = datetime.now()
 
-		try:
-			db[collection_name].insert_one(record_dict)
-		except pymongo.errors.DuplicateKeyError:
-			db[collection_name].delete_one({"_id":record_dict["_id"]})
-			db[collection_name].insert_one(record_dict)
-		except Exception as e:
-			logging.info("------------------------------------")
-			logging.info(e)
-			logging.info("Error object id(orcid/file name): {}".format(record_dict["_id"])) 
+			try:
+				db[collection_name].insert_one(record_dict)
+			except pymongo.errors.DuplicateKeyError:
+				db[collection_name].delete_one({"_id":record_dict["_id"]})
+				db[collection_name].insert_one(record_dict)
+			except Exception as e:
+				logging.info("------------------------------------")
+				logging.info(e)
+				logging.info("Error object id(orcid/file name): {}".format(record_dict["_id"])) 
+	except Exception as e:
+		logging.info("------------------------------------")
+		logging.info(e)
 
 #---------------------------------------------------------
 # Download modified files in activities
@@ -103,28 +107,32 @@ def download_activities_file(orcid_to_sync):
 	client = MongoClient(ip, int(port), username=user_name, password=psword, maxPoolSize=10000)
 	db = client[db_name]
 
-	suffix = orcid_to_sync[-3:]
-	prefix = suffix + '/' + orcid_to_sync + '/'
-	local_directory = path + 'activities/' + prefix
-	# fetch data from S3
-	logger.info('aws s3 sync ' + activities_bucket + prefix + ' ' + local_directory + ' --delete')
-	cmd = 'aws s3 sync ' + activities_bucket + prefix + ' ' + local_directory + ' --delete' + ' --only-show-errors'
-	subprocess.call(shlex.split(cmd), shell=False)
-	# aws cli will remove the files but not the folders so,
-	# we need to check if the folders are empty and delete it
-	if os.path.exists(local_directory) and os.path.isdir(local_directory):
-		for root, dirs, files in os.walk(local_directory):
-			for dir in dirs:
-				if not os.listdir(local_directory + '/' + dir):
-					logger.info('Deleting %s because it is empty', local_directory + '/' + dir)
-					shutil.rmtree(local_directory + '/' + dir)
-		if not os.listdir(local_directory):
-			logger.info('Deleting %s because because it is empty', local_directory)
-			shutil.rmtree(local_directory)
-		# delete the suffix folder if needed
-		if not os.listdir(path + 'activities/' + suffix):
-			logger.info('Deleting %s because because it is empty', path + 'activities/' + suffix)
-			shutil.rmtree(path + 'activities/' + suffix)
+	try:
+		suffix = orcid_to_sync[-3:]
+		prefix = suffix + '/' + orcid_to_sync + '/'
+		local_directory = path + 'activities/' + prefix
+		# fetch data from S3
+		logger.info('aws s3 sync ' + activities_bucket + prefix + ' ' + local_directory + ' --delete')
+		cmd = 'aws s3 sync ' + activities_bucket + prefix + ' ' + local_directory + ' --delete' + ' --only-show-errors'
+		subprocess.call(shlex.split(cmd), shell=False)
+		# aws cli will remove the files but not the folders so,
+		# we need to check if the folders are empty and delete it
+		if os.path.exists(local_directory) and os.path.isdir(local_directory):
+			for root, dirs, files in os.walk(local_directory):
+				for dir in dirs:
+					if not os.listdir(local_directory + '/' + dir):
+						logger.info('Deleting %s because it is empty', local_directory + '/' + dir)
+						shutil.rmtree(local_directory + '/' + dir)
+			if not os.listdir(local_directory):
+				logger.info('Deleting %s because because it is empty', local_directory)
+				shutil.rmtree(local_directory)
+			# delete the suffix folder if needed
+			if not os.listdir(path + 'activities/' + suffix):
+				logger.info('Deleting %s because because it is empty', path + 'activities/' + suffix)
+				shutil.rmtree(path + 'activities/' + suffix)
+	except Exception as e:
+		logging.info("------------------------------------")
+		logging.info(e)
 
 #---------------------------------------------------------
 # Main process
