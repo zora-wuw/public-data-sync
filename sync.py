@@ -98,7 +98,7 @@ def download_summaries_file(orcid_to_sync):
 				logging.info("Error object id(orcid/file name): {}".format(record_dict["_id"])) 
 	except Exception as e:
 		logging.info("------------------------------------")
-		logging.info(e)
+		logging.info("Error message: {}".format(e))
 
 #---------------------------------------------------------
 # Download modified files in activities
@@ -132,7 +132,7 @@ def download_activities_file(orcid_to_sync):
 				shutil.rmtree(path + 'activities/' + suffix)
 	except Exception as e:
 		logging.info("------------------------------------")
-		logging.info(e)
+		logging.info("Error message: {}".format(e))
 
 #---------------------------------------------------------
 # Main process
