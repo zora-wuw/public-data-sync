@@ -12,6 +12,7 @@ import shlex
 from multiprocessing import Pool
 from pymongo import MongoClient
 import pymongo
+import pandas as pd
 
 #---------------------------------------------------------
 # Validates an integer is positive
@@ -138,7 +139,6 @@ def download_activities_file(orcid_to_sync):
 # Main process
 #---------------------------------------------------------
 if __name__ == "__main__":
-	start_time = datetime.now()
 
 	# Download the lambda file
 	logger.info('Downloading the lambda file')
@@ -163,32 +163,12 @@ if __name__ == "__main__":
 
 	logger.info('Sync records modified after %s', str(last_sync))
 
-	records_to_sync = []
+	last_modified_df = pd.read_csv("last_modified.csv", encoding="UTF-8", header = 0)
+	last_modified_df["last_modified"] = pd.to_datetime(last_modified_df["last_modified"], format=date_format)
 
-	is_first_line = True
-
-	for line in open('last_modified.csv', 'r'):
-		if is_first_line:
-			is_first_line = False
-			continue
-		line = line.rstrip('\n')
-		elements = line.split(',')
-		orcid = elements[0]
-
-		last_modified_str = elements[3]
-		try:
-			last_modified_date = datetime.strptime(last_modified_str, date_format)
-		except ValueError:
-			last_modified_date = datetime.strptime(last_modified_str, date_format_no_millis)
-
-		if last_modified_date >= last_sync:
-			records_to_sync.append(orcid)
-			if len(records_to_sync) % 1000 == 0:
-				logger.info('Records to sync so far: %s', len(records_to_sync))
-		else:
-			# Since the lambda file is ordered by last_modified date descendant,
-			# when last_modified_date < last_sync we don't need to parse any more lines
-			break
+	recent_date = df['last_modified'].max()
+	new_df = last_modified_df[last_modified_df['last_modified']>last_sync]
+	records_to_sync = new_df["orcid"].tolist()
 
 	logger.info('Records to sync: %s', len(records_to_sync))
 
@@ -204,5 +184,5 @@ if __name__ == "__main__":
 
 	# keep track of the last time this process ran
 	file = open('last_ran.config','w')
-	file.write(str(start_time))
+	file.write(str(recent_date))
 	file.close()
