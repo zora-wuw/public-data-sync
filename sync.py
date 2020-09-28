@@ -166,7 +166,7 @@ if __name__ == "__main__":
 	last_modified_df = pd.read_csv("last_modified.csv", encoding="UTF-8", header = 0)
 	last_modified_df["last_modified"] = pd.to_datetime(last_modified_df["last_modified"], format=date_format)
 
-	recent_date = df['last_modified'].max()
+	recent_date = last_modified_df['last_modified'].max()
 	new_df = last_modified_df[last_modified_df['last_modified']>last_sync]
 	records_to_sync = new_df["orcid"].tolist()
 
