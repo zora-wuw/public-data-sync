@@ -69,6 +69,14 @@ month = str(now.month)
 year = str(now.year)
 
 #---------------------------------------------------------
+# Create folder if not exist
+#---------------------------------------------------------
+def create_folder(folder):
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    return folder
+
+#---------------------------------------------------------
 # Download modified files in summaries
 #---------------------------------------------------------
 def download_summaries_file(orcid_to_sync):
@@ -79,6 +87,7 @@ def download_summaries_file(orcid_to_sync):
 	try:
 		suffix = orcid_to_sync[-3:]
 		prefix = suffix + '/' + orcid_to_sync + '.xml'
+        create_folder(path + 'summaries/')
 		cmd = 'aws s3 cp ' + summaries_bucket + prefix + ' ' + path + 'summaries/' + prefix + ' --only-show-errors'
 		subprocess.call(shlex.split(cmd), shell=False)
 		record_dict = {}
@@ -111,6 +120,7 @@ def download_activities_file(orcid_to_sync):
 	try:
 		suffix = orcid_to_sync[-3:]
 		prefix = suffix + '/' + orcid_to_sync + '/'
+        create_folder(path + 'activities/')
 		local_directory = path + 'activities/' + prefix
 		# fetch data from S3
 		logger.info('aws s3 sync ' + activities_bucket + prefix + ' ' + local_directory + ' --delete')
@@ -162,6 +172,8 @@ if __name__ == "__main__":
 		last_sync = (datetime.now() - timedelta(days=30))
 
 	logger.info('Sync records modified after %s', str(last_sync))
+    
+    create_folder(path)
 
 	last_modified_df = pd.read_csv("last_modified.csv", encoding="UTF-8", header = 0)
 	last_modified_df["last_modified"] = pd.to_datetime(last_modified_df["last_modified"], format=date_format)
