@@ -35,7 +35,8 @@ parser.add_argument('-u', '--username', help='MongoDB username', default='')
 parser.add_argument('-psword', '--password', help='MongoDB password', default='')
 parser.add_argument('-db', '--database', help='MongoDB database name', default='')
 parser.add_argument('-c', '--collection', help='MongoDB collection name', default='')
-parser.add_argument('-arc', '--archive_collection', help='Archive MongoDB collection name', default='')
+parser.add_argument('-arcdb', '--archive_database', help='Archive MongoDB database name', default='')
+parser.add_argument('-arcc', '--archive_collection', help='Archive MongoDB collection name', default='')
 args = parser.parse_args()
 
 path = args.path if args.path.endswith('/') else (args.path + '/')
@@ -51,6 +52,7 @@ user_name = args.username
 psword = args.password
 db_name = args.database
 collection_name = args.collection
+archive_db_name = args.archive_database
 archive_collection_name = args.archive_collection
 
 logger = logging.getLogger('sync')
@@ -86,6 +88,7 @@ def download_summaries_file(orcid_to_sync):
 	# create mongodb instance for each process
 	client = MongoClient(ip, int(port), username=user_name, password=psword, maxPoolSize=10000)
 	db = client[db_name]
+	archive_db = client[archive_db_name]
 
 	try:
 		suffix = orcid_to_sync[-3:]
@@ -108,8 +111,8 @@ def download_summaries_file(orcid_to_sync):
 					old_record = r
 
 				old_record["_id"] = "{}-{}{:02d}{:02d}".format(old_record["_id"],int(year),int(month),int(day))
-				db[archive_collection_name].delete_one({"_id":old_record["_id"]})
-				db[archive_collection_name].insert_one(old_record)
+				archive_db[archive_collection_name].delete_one({"_id":old_record["_id"]})
+				archive_db[archive_collection_name].insert_one(old_record)
 
 				# insert updated record
 				db[collection_name].delete_one({"_id":record_dict["_id"]})
