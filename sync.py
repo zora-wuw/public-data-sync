@@ -35,6 +35,7 @@ parser.add_argument('-u', '--username', help='MongoDB username', default='')
 parser.add_argument('-psword', '--password', help='MongoDB password', default='')
 parser.add_argument('-db', '--database', help='MongoDB database name', default='')
 parser.add_argument('-c', '--collection', help='MongoDB collection name', default='')
+parser.add_argument('-arc', '--archive_collection', help='Archive MongoDB collection name', default='')
 args = parser.parse_args()
 
 path = args.path if args.path.endswith('/') else (args.path + '/')
@@ -50,6 +51,7 @@ user_name = args.username
 psword = args.password
 db_name = args.database
 collection_name = args.collection
+archive_collection_name = args.archive_collection
 
 logger = logging.getLogger('sync')
 formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
@@ -65,8 +67,9 @@ date_format = '%Y-%m-%d %H:%M:%S.%f'
 date_format_no_millis = '%Y-%m-%d %H:%M:%S'
 
 now = datetime.now()
-month = str(now.month)
-year = str(now.year)
+month = now.month
+year = now.year
+day = now.day
 
 #---------------------------------------------------------
 # Create folder if not exist
@@ -100,6 +103,15 @@ def download_summaries_file(orcid_to_sync):
 			try:
 				db[collection_name].insert_one(record_dict)
 			except pymongo.errors.DuplicateKeyError:
+				# insert old record into archive database
+				for r in db[collection_name].find({"_id":record_dict["_id"]}):
+					old_record = r
+
+				old_record["_id"] = "{}-{}{:02d}{:02d}".format(old_record["_id"],int(year),int(month),int(day))
+				db[archive_collection_name].delete_one({"_id":old_record["_id"]})
+				db[archive_collection_name].insert_one(old_record)
+
+				# insert updated record
 				db[collection_name].delete_one({"_id":record_dict["_id"]})
 				db[collection_name].insert_one(record_dict)
 			except Exception as e:
