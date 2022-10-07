@@ -98,29 +98,29 @@ def download_summaries_file(orcid_to_sync):
 		subprocess.call(shlex.split(cmd), shell=False)
 		record_dict = {}
 		record_dict["_id"] = orcid_to_sync
-		with open(path + 'summaries/' + prefix,"r",encoding="UTF-8") as f:
-			xml_content = f.read()
-			record_dict["xml-content"] = xml_content
-			record_dict["last-updated"] = datetime.now()
+		# with open(path + 'summaries/' + prefix,"r",encoding="UTF-8") as f:
+		# 	xml_content = f.read()
+		# 	record_dict["xml-content"] = xml_content
+		# 	record_dict["last-updated"] = datetime.now()
 
-			try:
-				db[collection_name].insert_one(record_dict)
-			except pymongo.errors.DuplicateKeyError:
-				# insert old record into archive database
-				for r in db[collection_name].find({"_id":record_dict["_id"]}):
-					old_record = r
+		# 	try:
+		# 		db[collection_name].insert_one(record_dict)
+		# 	except pymongo.errors.DuplicateKeyError:
+		# 		# insert old record into archive database
+		# 		for r in db[collection_name].find({"_id":record_dict["_id"]}):
+		# 			old_record = r
 
-				old_record["_id"] = "{}-{}{:02d}{:02d}".format(old_record["_id"],int(year),int(month),int(day))
-				archive_db[archive_collection_name].delete_one({"_id":old_record["_id"]})
-				archive_db[archive_collection_name].insert_one(old_record)
+		# 		old_record["_id"] = "{}-{}{:02d}{:02d}".format(old_record["_id"],int(year),int(month),int(day))
+		# 		archive_db[archive_collection_name].delete_one({"_id":old_record["_id"]})
+		# 		archive_db[archive_collection_name].insert_one(old_record)
 
-				# insert updated record
-				db[collection_name].delete_one({"_id":record_dict["_id"]})
-				db[collection_name].insert_one(record_dict)
-			except Exception as e:
-				logging.info("------------------------------------")
-				logging.info(e)
-				logging.info("Error object id(orcid/file name): {}".format(record_dict["_id"])) 
+		# 		# insert updated record
+		# 		db[collection_name].delete_one({"_id":record_dict["_id"]})
+		# 		db[collection_name].insert_one(record_dict)
+		# 	except Exception as e:
+		# 		logging.info("------------------------------------")
+		# 		logging.info(e)
+		# 		logging.info("Error object id(orcid/file name): {}".format(record_dict["_id"])) 
 	except Exception as e:
 		logging.info("------------------------------------")
 		logging.info("Error message: {}".format(e))
