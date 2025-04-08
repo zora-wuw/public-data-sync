@@ -188,14 +188,23 @@ if __name__ == "__main__":
 
 	logger.info('Sync records modified after %s', str(last_sync))
 	create_folder(path)
-
-	last_modified_df = pd.read_csv("last_modified.csv", encoding="UTF-8", header = 0)
-	last_modified_df["last_modified"] = pd.to_datetime(last_modified_df["last_modified"], format=date_format)
-
-	recent_date = last_modified_df['last_modified'].max()
-	new_df = last_modified_df[last_modified_df['last_modified']>last_sync]
-	records_to_sync = new_df["orcid"].tolist()
-
+	# Define data types for each column
+	dtype_spec = {
+	    'orcid': 'string',
+	    'path': 'string',
+	    'date_created': 'string',  # Will be parsed as dates during import
+	    'last_modified': 'string'  # Will be parsed as dates during import
+	}
+	# Specify date columns to parse
+	parse_dates = ['date_created', 'last_modified']
+	# Initialize an empty list to collect records to sync
+	records_to_sync = []
+	# Process the CSV file in chunks
+	chunk_size = 1000000  # Adjust based on your system's memory capacity
+	for chunk in pd.read_csv("last_modified.csv", dtype=dtype_spec, parse_dates=parse_dates, chunksize=chunk_size, encoding="UTF-8"):
+	    # Filter rows where 'last_modified' is greater than 'last_sync'
+	    new_records = chunk[chunk['last_modified'] > last_sync]
+	    records_to_sync.extend(new_records["orcid"].tolist())
 	logger.info('Records to sync: %s', len(records_to_sync))
 
 	if download_summaries:
